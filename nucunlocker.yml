@@ -1,0 +1,10 @@
+---
+# Example config for test purposes with the payload in ./tests/
+url: http://localhost:8000/encryptedsecretb64
+auth_token: blar1337
+auth_header: X-Auth-Token
+http_method: GET
+payload_password: 4ZerpvbIoWOJQPp8
+unlock_placeholder: PLACEHOLDER_PWD
+unlock_cmd: /opt/homebrew/bin/bash
+unlock_args: ["-c", "ls -alh ; echo 'hey: XXX_PLACEHOLDER_PWD_XXX'"]
