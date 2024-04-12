@@ -24,4 +24,19 @@ if ! grep -Fq 'NUC unlocked' "$output"; then
     echo "failed ❌ expected sucess msg not found"
     exit 1
 fi
-echo "Test passed ✅"
+echo "Test for mode unlock passed ✅"
+
+# test for encrypt/decrypt mode
+go run main.go -m encrypt -p "UT0EVP😆xStu3q" -d "0BGG7zyFqhauu42tESRMtlBt92C1tYaF"  2>&1 |tee "$output"
+ciphertext=$(grep -A 1 -F -- '----COPY FROM HERE----' "$output" |tail -n 1)
+# decrypt
+go run main.go -m decrypt -p "UT0EVP😆xStu3q" -d "$ciphertext"  2>&1 |tee "$output"
+if ! grep -Fq '0BGG7zyFqhauu42tESRMtlBt92C1tYaF' "$output"; then
+    echo "failed ❌ expected decrypted text not found"
+    exit 1
+fi
+if go run main.go -m decrypt -p "" -d "$ciphertext"; then
+    echo "failed ❌ expected error when password is empty"
+    exit 1
+fi
+echo "Test for mode encrypt & decrypt passed ✅"

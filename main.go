@@ -208,7 +208,7 @@ see the repo nucunlocker.yml for the config format
 			log.Fatal(err)
 		}
 		base64ciphertext := base64.StdEncoding.EncodeToString(ciphertextbyte)
-		fmt.Printf("Encrypted data: \n----------------\n%s\n----------------\n", string(base64ciphertext))
+		fmt.Printf("Encrypted data: \n----COPY FROM HERE----\n%s\n-----COPY TO HERE-----\n", string(base64ciphertext))
 	case "decrypt":
 		// Helper to verify your payload
 		fmt.Println("Decrypting cipher text")
@@ -220,7 +220,7 @@ see the repo nucunlocker.yml for the config format
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("Decrypted data: \n----------------\n%s\n----------------\n", string(plaintext))
+		fmt.Printf("Decrypted data: \n----COPY FROM HERE----\n%s\n-----COPY TO HERE-----\n", string(plaintext))
 	default:
 		fmt.Println(usage)
 		log.Fatalf("Invalid mode")
