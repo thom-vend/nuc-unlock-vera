@@ -14,7 +14,7 @@ pushd tests
 srvpid=$!
 popd
 sleep 0.1
-go run main.go -m unlock 2>&1 |tee "$output"
+go run main.go -m unlock -r 2>&1 |tee "$output"
 # Check output
 if ! grep -Fq 'word 1 word 2 word 3' "$output"; then
     echo "failed ❌ partial payload content not found, should be outputed by the executed cmd"

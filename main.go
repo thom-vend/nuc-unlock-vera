@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/scrypt"
 	"gopkg.in/yaml.v3"
@@ -29,6 +31,8 @@ type Config struct {
 	UnlockPlaceholder string   `yaml:"unlock_placeholder"`
 }
 
+var ErrHttpPageExpired = errors.New("419: page expired")
+
 func loadConfig(configPath string) Config {
 	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
@@ -41,6 +45,7 @@ func loadConfig(configPath string) Config {
 	}
 	return conf
 }
+
 func httpRequest(method string, url string, authHeader string, token string) (string, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
@@ -53,6 +58,9 @@ func httpRequest(method string, url string, authHeader string, token string) (st
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
+	}
+	if resp.StatusCode == 419 {
+		return "", ErrHttpPageExpired
 	}
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("HTTP status code: %d", resp.StatusCode)
@@ -160,15 +168,29 @@ see the repo nucunlocker.yml for the config format
 	mode := flag.String("m", "", "run mode (unlock/encrypt/decrypt)")
 	data := flag.String("d", "", "data to encrypt/decrypt")
 	password := flag.String("p", "", "password to encrypt/decrypt (for encrypt/decrypt mode)")
+	retry := flag.Bool("r", false, "retry on http 419 error indefinitely")
+
 	flag.Parse()
 	switch *mode {
 	case "unlock": // default mode
 		log.Println("Unlocking NUC 🤖")
 		conf := loadConfig(*configPath)
 		// make api call
-		response, err := httpRequest(conf.HttpMethod, conf.Url, conf.AuthHeader, conf.AuthToken)
-		if err != nil {
-			log.Fatalf("Error: %v", err)
+		var response string
+		var err error
+		for {
+			response, err = httpRequest(conf.HttpMethod, conf.Url, conf.AuthHeader, conf.AuthToken)
+			if err != nil {
+				if err == ErrHttpPageExpired && *retry {
+					log.Printf("Warning: %v, retry enabled ...", err)
+					time.Sleep(3 * time.Second)
+					continue
+				} else {
+					log.Fatalf("Error: %v", err)
+				}
+			} else {
+				break
+			}
 		}
 		log.Println("Payload fetched ✅")
 
