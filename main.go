@@ -32,7 +32,7 @@ type Config struct {
 func loadConfig(configPath string) Config {
 	yamlFile, err := os.ReadFile(configPath)
 	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
+		log.Fatalf("yamlFile.Get err   #%v ", err)
 	}
 	var conf Config
 	err = yaml.Unmarshal(yamlFile, &conf)
@@ -67,6 +67,14 @@ func httpRequest(method string, url string, authHeader string, token string) (st
 
 // copy pasted from https://bruinsslot.jp/post/golang-crypto/
 func Encrypt(key, data []byte) ([]byte, error) {
+	if len(key) < 10 {
+		return nil, fmt.Errorf("key must be at least 10 characters")
+	}
+
+	if len(data) == 0 {
+		return nil, fmt.Errorf("data must not be empty")
+	}
+
 	key, salt, err := DeriveKey(key, nil)
 	if err != nil {
 		return nil, err
@@ -95,6 +103,9 @@ func Encrypt(key, data []byte) ([]byte, error) {
 }
 
 func Decrypt(key, data []byte) ([]byte, error) {
+	if len(data) < 64 {
+		return nil, fmt.Errorf("data must must be at least 64 characters long")
+	}
 	salt, data := data[len(data)-32:], data[:len(data)-32]
 
 	key, _, err := DeriveKey(key, salt)
@@ -139,23 +150,21 @@ func DeriveKey(password, salt []byte) ([]byte, []byte, error) {
 }
 
 func main() {
+	usage := `
+Usage: call with --help to see available arguments
+Use encrypt/decrypt mode to create the payload
+see the repo nucunlocker.yml for the config format
+	`
 	// Parse command line arguments
 	configPath := flag.String("c", "nucunlocker.yml", "path to config file")
 	mode := flag.String("m", "", "run mode (unlock/encrypt/decrypt)")
 	data := flag.String("d", "", "data to encrypt/decrypt")
 	password := flag.String("p", "", "password to encrypt/decrypt (for encrypt/decrypt mode)")
 	flag.Parse()
-	conf := loadConfig(*configPath)
-
-	usage := `
-Usage: call with --help to see available arguments
-Use encrypt/decrypt mode to create the payload
-see the repo nucunlocker.yml for the config format
-	`
-
 	switch *mode {
 	case "unlock": // default mode
 		log.Println("Unlocking NUC 🤖")
+		conf := loadConfig(*configPath)
 		// make api call
 		response, err := httpRequest(conf.HttpMethod, conf.Url, conf.AuthHeader, conf.AuthToken)
 		if err != nil {
