@@ -65,7 +65,7 @@ func httpRequest(method string, url string, authHeader string, token string) (st
 	return string(body), nil
 }
 
-// import code from https://bruinsslot.jp/post/golang-crypto/
+// copy pasted from https://bruinsslot.jp/post/golang-crypto/
 func Encrypt(key, data []byte) ([]byte, error) {
 	key, salt, err := DeriveKey(key, nil)
 	if err != nil {
@@ -139,23 +139,29 @@ func DeriveKey(password, salt []byte) ([]byte, []byte, error) {
 }
 
 func main() {
-	// Read arguments with "flag", load config file path with flag `-c <path>`
+	// Parse command line arguments
 	configPath := flag.String("c", "nucunlocker.yml", "path to config file")
-	mode := flag.String("m", "unlock", "run mode (unlock/encrypt/decrypt)")
+	mode := flag.String("m", "", "run mode (unlock/encrypt/decrypt)")
 	data := flag.String("d", "", "data to encrypt/decrypt")
 	password := flag.String("p", "", "password to encrypt/decrypt (for encrypt/decrypt mode)")
 	flag.Parse()
 	conf := loadConfig(*configPath)
 
+	usage := `
+Usage: call with --help to see available arguments
+Use encrypt/decrypt mode to create the payload
+see the repo nucunlocker.yml for the config format
+	`
+
 	switch *mode {
-	case "unlock":
+	case "unlock": // default mode
 		log.Println("Unlocking NUC 🤖")
 		// make api call
 		response, err := httpRequest(conf.HttpMethod, conf.Url, conf.AuthHeader, conf.AuthToken)
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
-		log.Println("Payload received ✅")
+		log.Println("Payload fetched ✅")
 
 		// decrypt response
 		ciphertextbyte, err := base64.StdEncoding.DecodeString(response)
@@ -186,6 +192,7 @@ func main() {
 		log.Println("NUC unlocked ✅")
 
 	case "encrypt":
+		// Helper to create encrypted payload (small payload as it fit in argument lines)
 		fmt.Println("Encrypting clear text")
 		ciphertextbyte, err := Encrypt([]byte(*password), []byte(*data))
 		if err != nil {
@@ -194,6 +201,7 @@ func main() {
 		base64ciphertext := base64.StdEncoding.EncodeToString(ciphertextbyte)
 		fmt.Printf("Encrypted data: \n----------------\n%s\n----------------\n", string(base64ciphertext))
 	case "decrypt":
+		// Helper to verify your payload
 		fmt.Println("Decrypting cipher text")
 		ciphertextbyte, err := base64.StdEncoding.DecodeString(*data)
 		if err != nil {
@@ -205,6 +213,7 @@ func main() {
 		}
 		fmt.Printf("Decrypted data: \n----------------\n%s\n----------------\n", string(plaintext))
 	default:
+		fmt.Println(usage)
 		log.Fatalf("Invalid mode")
 		os.Exit(1)
 	}
