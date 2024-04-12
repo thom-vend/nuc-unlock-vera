@@ -9,7 +9,7 @@ fi
 go fmt
 ./go_tests.sh
 ./integration_tests.sh
-./go_build_windows.sh
+./go_build_release.sh
 git tag -a "$new_tag" -m 'Release tag'
 git push origin "$new_tag"
 gh release create --generate-notes --latest "$new_tag" ./release/*
