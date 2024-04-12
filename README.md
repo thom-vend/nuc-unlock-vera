@@ -3,7 +3,7 @@ Basic tool: fetch ciphered stuff on http(s) server, decrypt, run command
 
 See nucunlocker.yml for configuration options
 
-## Options
+## Command args
 ```
 Usage of nucunlocker:
   -c string
