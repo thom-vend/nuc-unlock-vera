@@ -8,7 +8,7 @@ do
     for supported_arch in amd64 arm64
     do
         file_ext=""
-        if [ $supported_os == "windows" ]; then
+        if [[ "$supported_os" == "windows" ]]; then
             file_ext=".exe"
         fi
         output_name="nucunlocker-${supported_os}-${supported_arch}${file_ext}"
